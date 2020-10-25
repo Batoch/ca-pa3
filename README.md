@@ -143,7 +143,7 @@ ALU operation:    67 instructions (55.83%)
 Control transfer: 27 instructions (22.50%)
 ```
 
-If the value of the `t6` (or `x31`) register is nonzero, it means that your program didn't pass all the test cases. Each bit in the value of the `t6` represents the result of a test case (LSB is for test 0, and so on...). The bit will be set if your program didn't pass the corresponding test.
+If the value of the `t6` (or `x31`) register is nonzero, it means that your program didn't pass some test cases. Each bit in the value of the `t6` represents the result of a test case (LSB is for test 0, and so on...). The bit will be set if your program didn't pass the corresponding test.  
 For example, if the value of the `t6` is equal to 0x0000000d (0b1101 in binary), it means that your program didn't pass test 0, 2 and 3, while passing the others.
 
 
