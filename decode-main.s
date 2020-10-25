@@ -22,7 +22,7 @@
 _start:
 	lui	sp, 0x80020
 	call	main
-	ecall
+	ebreak
 
 # mul8 - Get num in {1, 2, 3} and return num * 8
 mul8:
