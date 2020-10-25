@@ -151,7 +151,7 @@ For example, if the value of the `t6` is equal to 0x0000000d (0b1101 in binary),
 
 * You are allowed to use only the following registers in the `decode.s` file: `zero (x0)`, `sp`, `ra`, and `a0` ~ `a5`. If you are running out of registers, use stack as temporary storage. 
 
-* __The maximum amount of the space you can use in the stack is limited to 128 bytes.__ Let A be the address indicated by the `sp` register at the beginning of the function `decode()`. The valid stack area you can use is from `A - `128` to `A - 1`. You should always access the stack area using the `sp` register such as `sw a0, 16(sp)`.
+* __The maximum amount of the space you can use in the stack is limited to 128 bytes.__ Let `A` be the address indicated by the `sp` register at the beginning of the function `decode()`. The valid stack area you can use is from `A - 128` to `A - 1`. You should always access the stack area using the `sp` register such as `sw a0, 16(sp)`.
 
 * Your solution should finish within a reasonable time. If your code does not finish within a predefined threshold, it will be terminated.
 
