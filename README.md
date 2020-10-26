@@ -31,7 +31,7 @@ You will be using `lw` and `sw` RISC-V instructions to access data in memory. Th
 
 ## Building RISC-V gcc compiler
 
-In order to compile RISC-V assembly programs, you need to build a cross compiler, i.e. the compiler that generates the RISC-V binary code on the x86-64 machine. To build the RISC-V toolchain on your machine (on either Linux or MacOS), please take the following steps. These instructions are also available in the [README.md](https://github.com/snu-csl/pyrisc/blob/master/README.md) file of the PyRISC toolset.
+In order to compile RISC-V assembly programs, you need to build a cross compiler, i.e. the compiler that generates the RISC-V binary code on the x86-64 machine. To build the RISC-V toolchain on your machine (on either Linux or MacOS), please take the following steps. These instructions are also available in the [README.md](https://github.com/snu-csl/pyrisc/blob/master/README.md) file of the [PyRISC toolset](https://github.com/snu-csl/pyrisc).
 
 ### 1. Install prerequisite packages first
 
