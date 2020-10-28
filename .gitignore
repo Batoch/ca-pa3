@@ -2,3 +2,6 @@
 *.o
 *.swp
 decode
+decode-main.s
+decode-test.s
+Makefile
