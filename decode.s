@@ -28,34 +28,38 @@
 	.globl	decode
 decode:
 				# Saving everything to be able to use a0-a5
-			sw     a0, 0(sp)
-			sw     a1, 4(sp)
-			sw     a2, 8(sp)
-			sw     a3, 12(sp)
+			sw    a0, 0(sp)
+			sw    a1, -4(sp)
+			sw    a2, -8(sp)
+			sw    a3, -12(sp)
 
       # To Big endian
-      lw     a4, 0(a0)    						# Loading the first 8-bit word in a4
+			li		a5, 0										# Indice in inp to transforme to big endian
 
-      li     a3, 0xFF000000
-      and    a3, a3, a4
-      srli   a3, a3, 24
-			mv		 a2, a3
 
-      li     a3, 0x00FF0000
-      and    a3, a3, a4
-      srli   a3, a3, 8
-			or		 a2, a2, a3
 
-      li     a3, 0x0000FF00
-      and    a3, a3, a4
-      slli   a3, a3, 8
-			or		 a2, a2, a3
+      lw    a4, 0(a0)    						# Loading the first 8-bit word in a4
 
-      li     a3, 0x000000FF
-      and    a3, a3, a4
-      slli   a3, a3, 24
-			or		 a2, a2, a3
-			sw     a2, 16(sp)
+      li    a3, 0xFF000000
+      and   a3, a3, a4
+      srli  a3, a3, 24
+			mv		a2, a3
+
+      li    a3, 0x00FF0000
+      and   a3, a3, a4
+      srli  a3, a3, 8
+			or		a2, a2, a3
+
+      li    a3, 0x0000FF00
+      and   a3, a3, a4
+      slli  a3, a3, 8
+			or		a2, a2, a3
+
+      li    a3, 0x000000FF
+      and   a3, a3, a4
+      slli  a3, a3, 24
+			or		a2, a2, a3
+			sw    a2, -16(sp)
 
 			# The first half of the rankTable is in A2 and in 16(sp)
 
@@ -63,11 +67,11 @@ decode:
 
 			# Padding
 
-			lw     a4, 4(a0)
-			li     a5, 0x000000F0
-      and    a5, a5, a4
-			srli   a5, a5, 4
-			sw     a5, 24(sp)
+			lw    a4, 4(a0)
+			li    a5, 0x000000F0
+      and   a5, a5, a4
+			srli  a5, a5, 4
+			sw    a5, -24(sp)
 
 			# The Padding is in A5 and 24(sp)
 
@@ -76,7 +80,7 @@ decode:
 			li		a0, 0										# a = 0
 			li		a1, 0										# i1 = 0
 			li		a2, 0										# i2 = 0
-			sw    a0, 20(sp)							# rankTable (second part) = 0
+			sw    a0, -20(sp)							# rankTable (second part) = 0
 
 
 Loop1:
@@ -90,13 +94,13 @@ Loop2:
 Loop3:
 			# If a = rankTable1[i1]
 			li    a3, 0x0000000F					# Mask
-			sw    a1, 24(sp)							# Save i1
+			sw    a1, -24(sp)							# Save i1
 			slli  a1, a1, 2								# i1 *= 4
 			sll   a3, a3, a1							# 0x0000000F << i1
-			lw    a4, 16(sp)							# rankTable in A4
+			lw    a4, -16(sp)							# rankTable in A4
 			and   a3, a3, a4							# put rankTable[i1] in A3
 			srl   a3, a3, a1							# A3 >> A1
-			lw    a1, 24(sp)							# Restore i1
+			lw    a1, -24(sp)							# Restore i1
 
 			bne		a3, a0, Endloop3				# if a != rankTable1[i1] goto Endloop3
 			addi	a0, a0, 1								# a++
@@ -110,20 +114,20 @@ Endloop2:
 			sub 	a4, a5, a2							# indice = 7 - i2
 			slli  a4, a4, 2								# indice *= 4
 
-			sw    a0, 28(sp)							# Save a
+			sw    a0, -28(sp)							# Save a
 			sll   a0, a0, a4							# A << indice
-			lw    a5, 20(sp)							# rankTable2 in A5
+			lw    a5, -20(sp)							# rankTable2 in A5
 			or		a5, a5, a0	  					# rankTable2[i] = a
-			sw    a5, 20(sp)							# Save rankTable2
-			lw    a0, 28(sp)							# Restore a
+			sw    a5, -20(sp)							# Save rankTable2
+			lw    a0, -28(sp)							# Restore a
 
 			addi	a0, a0, 1								# a++
 			addi	a2, a2, 1								# i2++
 			li		a1, 0										# i1 = 0
 			beq		a0, a0, Loop1						# Goto loop1
 Endloop1:
-			lw    a4, 16(sp)							# rankTable1 in A4
-			lw    a5, 20(sp)							# rankTable2 in A5
+			lw    a4, -16(sp)							# rankTable1 in A4
+			lw    a5, -20(sp)							# rankTable2 in A5
 
 
 ret
