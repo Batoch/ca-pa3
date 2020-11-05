@@ -36,9 +36,9 @@ decode:
       # To Big endian
 			li		a5, 0										# Indice in inp to transforme to big endian
 
-
-
-      lw    a4, 0(a0)    						# Loading the first 8-bit word in a4
+ToBigEndian:
+			blt		a1, a5, EndToBigEndian	# If Indice is out of scope, then the convertion is finished
+      lw    a4, 0(a0)    						# Loading the 8-bit word pointed by a0 in a4
 
       li    a3, 0xFF000000
       and   a3, a3, a4
@@ -59,23 +59,32 @@ decode:
       and   a3, a3, a4
       slli  a3, a3, 24
 			or		a2, a2, a3
-			sw    a2, -16(sp)
 
-			# The first half of the rankTable is in A2 and in 16(sp)
+			sw    a4, 0(a0)    						# Save the 8-bit word Big endian in a4 (Replace from Little to Big)
+			addi	a0, a0, 4								# a0 point to the next 8-bit word
+			addi	a5, a5, 4								# i + 4
+			beq		zero, zero, ToBigEndian	# Goto loop2
+
+EndToBigEndian:
+
+			lw		a0, 0(sp)								# Restore a0
+			lw		a2, 0(a0)								# First half of rankTable in BigEndian
+			sw    a2, -16(sp)							# Put the first half of the rankTable in -16(sp)
 
       # End To Big endian
 
 			# Padding
 
-			lw    a4, 4(a0)
-			li    a5, 0x000000F0
+			addi	a0, a0, 4
+			lw    a4, 0(a0)
+			li    a5, 0xF0000000
       and   a5, a5, a4
-			srli  a5, a5, 4
-			sw    a5, -24(sp)
+			slli  a5, a5, 28
+			sw    a5, -24(sp)							# Put the Padding in -24(sp)
 
-			# The Padding is in A5 and 24(sp)
+			# The Padding is in A5 and -24(sp)
 
-			## Creating the rankTable (16(sp) and 20(sp))
+			## Creating the rankTable (-16(sp) and -20(sp))
 
 			li		a0, 0										# a = 0
 			li		a1, 0										# i1 = 0
@@ -128,6 +137,6 @@ Endloop2:
 Endloop1:
 			lw    a4, -16(sp)							# rankTable1 in A4
 			lw    a5, -20(sp)							# rankTable2 in A5
-
+			lw    a3, -24(sp)
 
 ret
