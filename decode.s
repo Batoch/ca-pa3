@@ -185,12 +185,15 @@ Indiceinf32:
 
 
 			lw		a2, -4(sp)									# Loading inbyte in
+			slli	a2, a2, 3										# How many bits
 			lw		a3, -40(sp)									# index Datapointer in a3
+			slli	a3, a3, 3										# Express it in bits too
 
-			srli	a4, a1, 3										# a4 = a1 (i) / 8 (how many bytes)
+			add		a4, a1, a3
+			lw		a3, -24(sp)
 			add		a4, a4, a3
 
-			bge		a4, a2, EndDecode						# If a2 =< a4 (inbyte =< Datapointer index + i/8) then decode is finished
+			bge		a4, a2, EndDecode						# If a2 =< a4 (inbyte =< Datapointer index + i/8 + padding) then decode is finished
 
 			# Creating a moving windowed array
 
