@@ -357,12 +357,12 @@ EndValInRK:
 			sw		a3, 0(a4)										# Save output
 
 			lw		a4, -32(sp)
-			li		a6, 8
-			beq		a4, a6, EndDecode
+			#li		a6, 8
+			#beq		a4, a6, EndDecode
 
 			beq		zero, zero, Decode
 EndDecode:
-ebreak
+#ebreak
 
 			lw    a4, -36(sp)									# outp
 			lw		a5, 0(a4)
