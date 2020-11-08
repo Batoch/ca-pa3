@@ -27,16 +27,25 @@
 #---------------------------------------------------------------------
 	.globl	decode
 decode:
+
+			beq		zero, a1, End						# If inbyte = 0 jump to end
+			li		a4, 30
+			blt		a4, a1, Endminus1							# If input is more than 30 bytes then we will have issue with sp 
+
 			# Saving everything to be able to use a0-a5
-			sw    a0, -64(sp)
+			sw    a0, -44(sp)
 			sw    a1, -4(sp)
 			sw    a2, -8(sp)
 			sw    a3, -12(sp)
 
 			# To Big endian
 			li		a5, 0										# Indice in inp to transforme to big endian
+			addi	a1, sp, -124
 ToBigEndian:
+			sw		a1, -28(sp)
+			lw    a1, -4(sp)
 			blt		a1, a5, EndToBigEndian						# If Indice (a5) is out of scope, then the convertion is finished
+			lw		a1, -28(sp)
 			lw		a4, 0(a0)    								# Loading the 8-bit word pointed by a0 in a4
 
 			li		a3, 0xFF000000
@@ -59,14 +68,18 @@ ToBigEndian:
 			slli	a3, a3, 24
 			or		a2, a2, a3
 
-			sw		a2, 0(a0)    								# Save the 8-bit word Big endian in a4 (Replace from Little to Big)
+			sw		a2, 0(a1)    								# Save the 8-bit word Big endian in a4 (Replace from Little to Big)
+
 			addi	a0, a0, 4									# a0 point to the next 8-bit word
 			addi	a5, a5, 4									# i + 4
+			addi	a1, a1, 4									# i + 4
 			beq		zero, zero, ToBigEndian						# Goto loop2
 
 EndToBigEndian:
+			#lw		a0, -124(sp)
+			#lw		a0, -44(sp)									# Restore a0
+			addi	a0, sp, -124
 
-			lw		a0, -64(sp)									# Restore a0
 			lw		a2, 0(a0)									# First half of rankTable in BigEndian
 			sw		a2, -16(sp)									# Put the first half of the rankTable in -16(sp)
 
@@ -101,13 +114,13 @@ Loop2:
 Loop3:
 			# If a = rankTable1[i1]
 			li		a3, 0x0000000F								# Mask
-			sw		a1, -52(sp)									# Save i1
+			sw		a1, -28(sp)									# Save i1
 			slli	a1, a1, 2									# i1 *= 4
 			sll		a3, a3, a1									# 0x0000000F << i1
 			lw		a4, -16(sp)									# rankTable in A4
 			and		a3, a3, a4									# put rankTable[i1] in A3
 			srl		a3, a3, a1									# A3 >> A1
-			lw		a1, -52(sp)									# Restore i1
+			lw		a1, -28(sp)									# Restore i1
 
 			bne		a3, a0, Endloop3							# if a != rankTable1[i1] goto Endloop3
 			addi	a0, a0, 1									# a++
@@ -146,14 +159,20 @@ Endloop1:
 			#	 -40(sp) Keep track of how much data pointer is far from initial
 			#--------------------------------------------------
 			lw    a0, -8(sp)
+			addi	a0, sp, -52
 			sw		a0, -36(sp)
+
+			lw		a1, -12(sp)
+			bge		zero, a1, Endminus1
+
 			li		a1, 0
-			sw		a1, 0(a0)									# Init out
+			#sw		a1, 0(a0)									# Init out		#issue
 			sw		a1, -32(sp)									# Init index of data stored
 
 
 
-			lw		a0, -64(sp)										# Initialize data pointer
+			#lw		a0, -44(sp)										# Initialize data pointer
+			addi	a0, sp, -124
 
 
 			addi	a0, a0, 4										# Skipping rankedtab
@@ -245,14 +264,18 @@ EndValInRK:
 			# Saving data
 
 
-
-			lw    a4, -36(sp)									# outp
 			lw		a3, -32(sp)									# Data Index
+
 			slli	a3, a3, 2
 			srl		a5, a5, a3
 			srli	a3, a3, 2
 			addi	a3, a3, 1
 			sw 		a3, -32(sp)									# Save Data index
+
+			lw		a4, -12(sp)									# outbytes
+			blt		a4, a3, Endminus1						# if dataindex > outbytes
+
+			lw    a4, -36(sp)									# outp
 			lw		a3, 0(a4)										# Out
 			or		a3, a3, a5
 			sw		a3, 0(a4)										# Save output
@@ -265,20 +288,22 @@ EndValInRK:
 EndDecode:
 
 
-
 			lw    a4, -36(sp)									# outp
 			lw		a5, 0(a4)
-			lw		a1, -40(sp)
+			lw		a1, -40(sp)							# Index Datapointer
 
 
+			lw    a0, -8(sp)							# outp
 
-			lw    a0, -8(sp)
-
+ebreak
 			# To Little endian
 			li		a5, 0										# Indice in inp to transforme to big endian
 ToLittleEndian:
-			blt		a1, a5, EndToLittleEndian						# If Indice (a5) is out of scope, then the convertion is finished
-			lw		a4, 0(a0)    								# Loading the 8-bit word pointed by a0 in a4
+			bge		a5, a1, EndToLittleEndian						# If Indice (a5) is out of scope, then the convertion is finished
+
+			lw    a3, -36(sp)									# outp
+			lw		a4, 0(a3)    								# Loading the 8-bit word pointed by a0 in a4
+
 
 			li		a3, 0xFF000000
 			and		a3, a3, a4
@@ -300,23 +325,25 @@ ToLittleEndian:
 			slli	a3, a3, 24
 			or		a2, a2, a3
 
-			sw		a2, 0(a0)    								# Save the 8-bit word Big endian in a4 (Replace from Little to Big)
-			addi	a0, a0, 4									# a0 point to the next 8-bit word
+			sw		a2, 0(a0)    								# Save the 8-bit word Big endian in a4 (Replace from Big to Little)
+			#addi	a0, a0, 4									# a0 point to the next 8-bit word
 			addi	a5, a5, 4									# i + 4
-			beq		zero, zero, ToLittleEndian						# Goto loop2
+			beq		zero, zero, ToLittleEndian						# Goto start
 
 EndToLittleEndian:
 
-lw    a4, -36(sp)									# outp
-lw		a5, 0(a4)
+#lw    a4, -8(sp)									# outp
+#lw		a5, 0(a4)
 lw		a4, -32(sp)
 srli	a0, a4, 1										# Return value
 
 			# End To Little endian
 
+End:
 
+ret
 
+Endminus1:
 
-
-
+		li	a0, -1
 ret
