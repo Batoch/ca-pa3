@@ -30,7 +30,7 @@ decode:
 
 			beq		zero, a1, End						# If inbyte = 0 jump to end
 			li		a4, 30
-			blt		a4, a1, Endminus1							# If input is more than 30 bytes then we will have issue with sp 
+			blt		a4, a1, Endminus1							# If input is more than 30 bytes then we will have issue with sp
 
 			# Saving everything to be able to use a0-a5
 			sw    a0, -44(sp)
@@ -38,62 +38,49 @@ decode:
 			sw    a2, -8(sp)
 			sw    a3, -12(sp)
 
-			# To Big endian
-			li		a5, 0										# Indice in inp to transforme to big endian
-			addi	a1, sp, -124
-ToBigEndian:
-			sw		a1, -28(sp)
-			lw    a1, -4(sp)
-			blt		a1, a5, EndToBigEndian						# If Indice (a5) is out of scope, then the convertion is finished
-			lw		a1, -28(sp)
-			lw		a4, 0(a0)    								# Loading the 8-bit word pointed by a0 in a4
 
+
+			lw		a1, (a0)
+ToBigEndian:
+# To Big endian (transform a1)
 			li		a3, 0xFF000000
-			and		a3, a3, a4
-			srli	a3, a3, 24
-			mv		a2, a3
+			and		a3, a3, a1
+			srli	a2, a3, 24
 
 			li		a3, 0x00FF0000
-			and		a3, a3, a4
+			and		a3, a3, a1
 			srli	a3, a3, 8
 			or		a2, a2, a3
 
 			li		a3, 0x0000FF00
-			and		a3, a3, a4
+			and		a3, a3, a1
 			slli	a3, a3, 8
 			or		a2, a2, a3
 
 			li		a3, 0x000000FF
-			and		a3, a3, a4
+			and		a3, a3, a1
 			slli	a3, a3, 24
-			or		a2, a2, a3
-
-			sw		a2, 0(a1)    								# Save the 8-bit word Big endian in a4 (Replace from Little to Big)
-
-			addi	a0, a0, 4									# a0 point to the next 8-bit word
-			addi	a5, a5, 4									# i + 4
-			addi	a1, a1, 4									# i + 4
-			beq		zero, zero, ToBigEndian						# Goto loop2
-
-EndToBigEndian:
-			#lw		a0, -124(sp)
-			#lw		a0, -44(sp)									# Restore a0
-			addi	a0, sp, -124
-
-			lw		a2, 0(a0)									# First half of rankTable in BigEndian
-			sw		a2, -16(sp)									# Put the first half of the rankTable in -16(sp)
-
+			or		a1, a2, a3
 			# End To Big endian
+EndToBigEndian:
+
+			sw		a1, -16(sp)									# Put the first half of the rankTable in -16(sp)
+
 
 			# Padding
 
-			addi	a0, a0, 4
-			lw		a4, 0(a0)
-			li		a5, 0xF0000000
+			lw		a4, 4(a0)
+			li		a5, 0x000000F0
 			and		a5, a5, a4
-			srli	a5, a5, 28
+			srli	a5, a5, 4
 			sw		a5, -24(sp)									# Put the Padding in -24(sp)
 			# The Padding is in A5 and -24(sp)
+
+
+
+
+
+
 
 			## Creating the rankTable (-16(sp) and -20(sp))
 
@@ -150,6 +137,11 @@ Endloop1:
 			lw		a5, -20(sp)									# rankTable2 in A5
 			lw		a3, -24(sp)
 
+
+
+
+
+
 			#--------------------------------------------------
 			#  a0:		Data pointer (inp)
 			#  a1:		Data index
@@ -159,21 +151,21 @@ Endloop1:
 			#	 -40(sp) Keep track of how much data pointer is far from initial
 			#--------------------------------------------------
 			lw    a0, -8(sp)
-			addi	a0, sp, -52
+			addi	a0, sp, -124
 			sw		a0, -36(sp)
 
 			lw		a1, -12(sp)
 			bge		zero, a1, Endminus1
 
 			li		a1, 0
-			#sw		a1, 0(a0)									# Init out		#issue
+			sw		a1, 0(a0)									# Init out
 			sw		a1, -32(sp)									# Init index of data stored
 
 
 
-			#lw		a0, -44(sp)										# Initialize data pointer
-			addi	a0, sp, -124
+			lw		a0, -44(sp)										# Initialize data pointer
 
+			#li		a0, 0
 
 			addi	a0, a0, 4										# Skipping rankedtab
 			li		a1, 4
@@ -191,27 +183,90 @@ Decode:
 			sw		a3, -40(sp)									# save Datapointer in a3
 Indiceinf32:
 
+
 			lw		a2, -4(sp)									# Loading inbyte in
 			lw		a3, -40(sp)									# index Datapointer in a3
 
 			srli	a4, a1, 3										# a4 = a1 (i) / 8 (how many bytes)
 			add		a4, a4, a3
 
-			bge		a4, a2, EndDecode						# If a2 =< a0 (inbyte =< Datapointer index + i/8) then decode is finished
+			bge		a4, a2, EndDecode						# If a2 =< a4 (inbyte =< Datapointer index + i/8) then decode is finished
 
 			# Creating a moving windowed array
-			lw		a3, 0(a0)									# Loading First values in a3
+
+
+			ToBigEndian1:
+			# To Big endian (transform from a2 to a3)
+			sw		a1, -52(sp)
+			lw		a1, 0(a0)									# Loading First values in a1
+
+			li		a3, 0xFF000000
+			and		a3, a3, a1
+			srli	a2, a3, 24
+
+			li		a3, 0x00FF0000
+			and		a3, a3, a1
+			srli	a3, a3, 8
+			or		a2, a2, a3
+
+			li		a3, 0x0000FF00
+			and		a3, a3, a1
+			slli	a3, a3, 8
+			or		a2, a2, a3
+
+			li		a3, 0x000000FF
+			and		a3, a3, a1
+			slli	a3, a3, 24
+			or		a3, a2, a3
+			# End To Big endian
+
+			lw		a1, -52(sp)
+			EndToBigEndian1:
+
+
 
 			sll		a3, a3, a1									# Tab1 << i
 			li		a2, 0												# Initialize moving windowed array
 			or		a2, a2, a3									# Tabtmp = Tab1
 
-			lw		a3, 4(a0)									# Loading Secondvalues in a3
+
+			ToBigEndian2:
+			# To Big endian (transform from a2 to a3)
+			sw		a1, -52(sp)
+			sw		a2, -56(sp)
+			lw		a1, 4(a0)									# Loading Secondvalues in a1
+
+			li		a3, 0xFF000000
+			and		a3, a3, a1
+			srli	a2, a3, 24
+
+			li		a3, 0x00FF0000
+			and		a3, a3, a1
+			srli	a3, a3, 8
+			or		a2, a2, a3
+
+			li		a3, 0x0000FF00
+			and		a3, a3, a1
+			slli	a3, a3, 8
+			or		a2, a2, a3
+
+			li		a3, 0x000000FF
+			and		a3, a3, a1
+			slli	a3, a3, 24
+			or		a3, a2, a3
+			# End To Big endian
+
+			lw		a1, -52(sp)
+			lw		a2, -56(sp)
+			EndToBigEndian2:
+
+
 			li		a4, 32
 			sub		a4, a4, a1									# a4 = 32-i
 			srl		a3, a3, a4									# Tab2 >> 32-i
 			or		a2, a2, a3									# Tabtmp += Tab2
 			# moving windowed array in a2
+
 
 			srl		a3, a2, 31									# Taking the last bit
 			beq		a3, zero, Val0							# Goto Val0 if the value start with 0
@@ -224,19 +279,38 @@ Indiceinf32:
 
 Val0:
 			li		a3, 3												# Nb of bytes to read = 3
-			beq		zero, zero, EndVal					# Goto EndVal
-Val10:
-			li		a3, 4												# Nb of bytes to read = 4
-			beq		zero, zero, EndVal					# Goto EndVal
-Val11:
-			li		a3, 5												# Nb of bytes to read = 5
-			#beq		zero, zero, EndVal				# Goto EndVal
-EndVal:
-			# Number of bits to read is now in a3
+
 			li		a4, 0												# Value of the current char to read
 			li		a5, 32
 			sub		a5, a5, a3									# a5 = 32-Nb of bytes to read
 			srl		a4, a2, a5									# a4 = Tabtmp >> 32-i (Value of current)
+
+			beq		zero, zero, EndVal					# Goto EndVal
+Val10:
+			li		a3, 4												# Nb of bytes to read = 4
+
+			li		a4, 0												# Value of the current char to read
+			li		a5, 32
+			sub		a5, a5, a3									# a5 = 32-Nb of bytes to read
+			srl		a4, a2, a5									# a4 = Tabtmp >> 32-i (Value of current)
+			andi	a4, a4, 7										# taking the 3 last bits
+			addi	a4, a4, 4										# adding 4, as 1000 is value nb 4, 1001 is 5.. and rankTable start from 0
+
+			beq		zero, zero, EndVal					# Goto EndVal
+Val11:
+			li		a3, 5												# Nb of bytes to read = 5
+
+			li		a4, 0												# Value of the current char to read
+			li		a5, 32
+			sub		a5, a5, a3									# a5 = 32-Nb of bytes to read
+			srl		a4, a2, a5									# a4 = Tabtmp >> 32-i (Value of current)
+			andi	a4, a4, 7										# taking the 3 last bits
+			addi	a4, a4, 8										# adding 8, as 11000 is 8, 11001 is 9...
+
+			#beq		zero, zero, EndVal				# Goto EndVal
+EndVal:
+			# Number of bits to read is now in a3
+
 			add		a1, a1, a3									# Data index += Nb of bytes read
 
 			li		a5, 8
@@ -264,6 +338,7 @@ EndValInRK:
 			# Saving data
 
 
+
 			lw		a3, -32(sp)									# Data Index
 
 			slli	a3, a3, 2
@@ -277,16 +352,17 @@ EndValInRK:
 
 			lw    a4, -36(sp)									# outp
 			lw		a3, 0(a4)										# Out
+
 			or		a3, a3, a5
 			sw		a3, 0(a4)										# Save output
 
-			#lw		a4, -32(sp)
-			#li		a6, 11
-			#beq		a4, a6, EndDecode
+			lw		a4, -32(sp)
+			li		a6, 8
+			beq		a4, a6, EndDecode
 
 			beq		zero, zero, Decode
 EndDecode:
-
+ebreak
 
 			lw    a4, -36(sp)									# outp
 			lw		a5, 0(a4)
@@ -295,7 +371,7 @@ EndDecode:
 
 			lw    a0, -8(sp)							# outp
 
-ebreak
+
 			# To Little endian
 			li		a5, 0										# Indice in inp to transforme to big endian
 ToLittleEndian:
@@ -332,12 +408,13 @@ ToLittleEndian:
 
 EndToLittleEndian:
 
-#lw    a4, -8(sp)									# outp
-#lw		a5, 0(a4)
+lw    a4, -8(sp)									# outp
+lw		a5, 0(a4)
 lw		a4, -32(sp)
 srli	a0, a4, 1										# Return value
 
 			# End To Little endian
+			ebreak
 
 End:
 
