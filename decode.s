@@ -27,15 +27,14 @@
 #---------------------------------------------------------------------
 	.globl	decode
 decode:
-			# li		a6, 0
 			beq		zero, a1, End						# If inbyte = 0 jump to end
-			li		a4, 30
-			blt		a4, a1, Endminus1							# If input is more than 30 bytes then we will have issue with sp
-
+			li		a4, 100
+			blt		a4, a1, Endminus1							# If input is more than 100 bytes then just skip
 			# Saving everything to be able to use a0-a5
 			sw    a0, -44(sp)
 			sw    a1, -4(sp)
 			sw    a2, -8(sp)
+			sw    a2, -64(sp)
 			sw    a3, -12(sp)
 
 
@@ -147,19 +146,21 @@ Endloop1:
 			#  a1:		Data index
 			#  a2:		moving windowed array
 			#	 -32(sp) Index of data stored
-			#	 -36(sp) outp
+			#	 -36(sp) out temp
 			#	 -40(sp) Keep track of how much data pointer is far from initial
+			#	 -44(sp) input data pointer
+			#	 -48(sp) return value
 			#--------------------------------------------------
-			addi	a0, sp, -124
-			sw		a0, -36(sp)					# We put values temporary in the stack so we can transform it to BigEndian
+			li		a0, 0
+			sw		a0, -36(sp)					# Initialize the temp value
+			sw		a0, -48(sp)					# return value
 
 			lw		a1, -12(sp)
 			bge		zero, a1, Endminus1
 
-			li		a1, 0
-			sw		a1, 0(a0)									# Init out
-			sw		a1, -32(sp)									# Init index of data stored
 
+			li		a1, 0
+			sw		a1, -32(sp)									# Init index of data stored
 
 
 			lw		a0, -44(sp)										# Initialize input data pointer
@@ -185,15 +186,20 @@ Indiceinf32:
 
 			lw		a2, -4(sp)									# Loading inbyte in
 			slli	a2, a2, 3										# How many bits
+			# Sub padding
+			lw		a3, -24(sp)
+			sub		a2, a2, a3
 
 			lw		a3, -40(sp)									# index Datapointer in a3
-			slli	a3, a3, 2										# Express it in bits too
+			slli	a3, a3, 3										# Express it in bits too
 
 			add		a4, a1, a3
-			lw		a3, -24(sp)
-			add		a4, a4, a3
 
-			bge		a4, a2, EndDecode						# If a2 =< a4 (inbyte =< Datapointer index + i/8 + padding/8) then decode is finished
+			# lw		a4, -32(sp)
+			# li		a3, 6
+			# beq		a4, a3, EndDecode
+
+			bge		a4, a2, EndDecode						# If a2 =< a4 (inbyte - padding =< Datapointer index + i) then decode is finished
 
 			# Creating a moving windowed array
 
@@ -345,8 +351,6 @@ EndValInRK:
 			#srli	a5, a5, 28
 			# Saving data
 
-
-
 			lw		a3, -32(sp)									# Data Index
 
 			slli	a3, a3, 2
@@ -360,21 +364,72 @@ EndValInRK:
 			lw		a4, -12(sp)									# outbytes
 			blt		a4, a3, Endminus1						# if dataindex > outbytes
 
-			lw    a4, -36(sp)									# outp
-			lw		a3, 0(a4)										# Out
+			lw    a3, -36(sp)									# outp
 			or		a3, a3, a5
-			sw		a3, 0(a4)										# Save output
+			sw		a3, -36(sp)										# Save output
 
 			lw		a5, -32(sp)
 
 			li		a3, 8
+
+
+
+
 			bne		a3, a5, Continue						# If a5 >= 9 then we store data to the next register
 
-			addi 	a4, a4, 4
-			sw    a4, -36(sp)									# save outp
+
+
+
+			# To Little endian
+			sw		a1, -52(sp)
+			sw		a2, -56(sp)
+
+			lw    a1, -36(sp)									# out tab
+			li		a3, 0
+			sw		a3, -36(sp)										# Reset the temp tab
+
+			li		a3, 0xFF000000
+			and		a3, a3, a1
+			srli	a2, a3, 24
+
+			li		a3, 0x00FF0000
+			and		a3, a3, a1
+			srli	a3, a3, 8
+			or		a2, a2, a3
+
+			li		a3, 0x0000FF00
+			and		a3, a3, a1
+			slli	a3, a3, 8
+			or		a2, a2, a3
+
+			li		a3, 0x000000FF
+			and		a3, a3, a1
+			slli	a3, a3, 24
+			or		a3, a2, a3
+
+
+			lw		a1, -52(sp)
+			lw		a2, -56(sp)
+			# End To Little endian
+
+			lw    a5, -8(sp)							# outp
+			sw		a3, (a5)
+
+			addi	a5, a5, 4										# Next register
+			sw    a5, -8(sp)							# outp
+
+			# addi 	a4, a4, 4
+			# sw    a4, -36(sp)									# save outp
+			lw		a5, -32(sp)
+			srli	a5, a5, 1
+
+			lw		a3, -48(sp)
+			add		a3, a3, a5
+			sw		a3, -48(sp)
+
+
 			li		a5, 0
-			sw		a5, -32(sp)
-			addi 	a6, a6, 4
+			sw		a5, -32(sp)									# Index of the data stored is reset
 Continue:
 # 			li		a3, 4
 # 			bne		a6, a3, Pasfin
@@ -386,77 +441,63 @@ Continue:
 			beq		zero, zero, Decode
 EndDecode:
 
-			addi	a0, sp, -124
-			lw    a4, 0(a0)									# outp
-			lw		a1, -40(sp)							# Index Datapointer
 
 
 
-			lw    a0, -8(sp)							# outp
-
+# Last row of data is not stored yet
 			# To Little endian
-			li		a5, 0										# Indice in inp to transforme to big endian
-			addi	a3, sp, -124								# outp
-
-			lw		a1, 0(a3)
-			lw		a2, 4(a3)
-			lw		a3, 8(a3)
-
-			ebreak
-
-
-ToLittleEndian:
-			bge		a5, a1, EndToLittleEndian						# If Indice (a5) is out of scope, then the convertion is finished
-
-			lw		a4, 0(a3)    								# Loading the 8-bit word pointed by a0 in a4
-			sw		a3, -28(sp)
+			lw    a1, -36(sp)									# out tab
 
 			li		a3, 0xFF000000
-			and		a3, a3, a4
-			srli	a3, a3, 24
-			mv		a2, a3
+			and		a3, a3, a1
+			srli	a2, a3, 24
 
 			li		a3, 0x00FF0000
-			and		a3, a3, a4
+			and		a3, a3, a1
 			srli	a3, a3, 8
 			or		a2, a2, a3
 
 			li		a3, 0x0000FF00
-			and		a3, a3, a4
+			and		a3, a3, a1
 			slli	a3, a3, 8
 			or		a2, a2, a3
 
 			li		a3, 0x000000FF
-			and		a3, a3, a4
+			and		a3, a3, a1
 			slli	a3, a3, 24
-			or		a2, a2, a3
-
-
-			lw		a3, -28(sp)
-			sw		a2, 0(a0)    								# Save the 8-bit word Big endian in a4 (Replace from Big to Little)
-			addi	a3, a3, 4									# a3 point to the next 8-bit word
-			addi	a5, a5, 4									# i + 4
-			lw		a2, 0(a0)
-			addi	a0, a0, 4									# i + 4
-			beq		zero, zero, ToLittleEndian						# Goto start
-
-EndToLittleEndian:
-
-# lw    a4, -8(sp)									# outp
-# lw		a1, 0(a4)
-# lw		a2, 4(a4)
-# lw		a3, 8(a4)
-
-lw		a4, -32(sp)
-srli	a0, a4, 1										# Return value
-
+			or		a3, a2, a3
 
 			# End To Little endian
 
+			lw    a5, -8(sp)							# outp
+			sw		a3, (a5)
 
-End:
+			lw		a5, -32(sp)
+			srli	a5, a5, 1
 
-ret
+			lw		a3, -48(sp)
+			add		a3, a3, a5
+			sw		a3, -48(sp)
+
+
+
+			lw    a1, -36(sp)
+
+			lw    a4, -64(sp)									# outp
+			lw		a1, 0(a4)
+			lw		a2, 4(a4)
+			lw		a3, 8(a4)
+
+			lw		a0, -48(sp)
+			
+
+			# ebreak
+						# End To Little endian
+
+
+			End:
+
+			ret
 
 Endminus1:
 
