@@ -27,15 +27,13 @@
 #---------------------------------------------------------------------
 	.globl	decode
 decode:
-			beq		zero, a1, End						# If inbyte = 0 jump to end
+			beq		zero, a1, End								# If inbyte = 0 jump to end
 			# Saving everything to be able to use a0-a5
-			sw    a0, -44(sp)
-			sw    a1, -4(sp)
-			sw    a2, -8(sp)
-			sw    a2, -64(sp)
-			sw    a3, -12(sp)
-
-
+			sw    	a0, -44(sp)
+			sw    	a1, -4(sp)
+			sw    	a2, -8(sp)
+			sw    	a2, -64(sp)
+			sw    	a3, -12(sp)
 
 			lw		a1, (a0)
 ToBigEndian:
@@ -75,17 +73,12 @@ EndToBigEndian:
 
 
 
-
-
-
-
 			## Creating the rankTable (-16(sp) and -20(sp))
 
 			li		a0, 0										# a = 0
 			li		a1, 0										# i1 = 0
 			li		a2, 0										# i2 = 0
 			sw		a0, -20(sp)									# rankTable (second part) = 0
-
 
 Loop1:
 			# If indice rankTable2 > 7 (if finished)
@@ -137,8 +130,6 @@ Endloop1:
 
 
 
-
-
 			#--------------------------------------------------
 			#  a0:		Data pointer (inp)
 			#  a1:		Data index
@@ -150,8 +141,8 @@ Endloop1:
 			#	 -48(sp) return value
 			#--------------------------------------------------
 			li		a0, 0
-			sw		a0, -36(sp)					# Initialize the temp value
-			sw		a0, -48(sp)					# return value
+			sw		a0, -36(sp)									# Initialize the temp value
+			sw		a0, -48(sp)									# return value
 
 			lw		a1, -12(sp)
 			bge		zero, a1, Endminus1
@@ -161,11 +152,9 @@ Endloop1:
 			sw		a1, -32(sp)									# Init index of data stored
 
 
-			lw		a0, -44(sp)										# Initialize input data pointer
+			lw		a0, -44(sp)									# Initialize input data pointer
 
-			#li		a0, 0
-
-			addi	a0, a0, 4										# Skipping rankedtab
+			addi	a0, a0, 4									# Skipping rankedtab
 			li		a1, 4
 			sw		a1, -40(sp)									# init index Datapointer
 
@@ -173,7 +162,7 @@ Endloop1:
 Decode:
 			# If indice >= 32, then we need to look for the next set of datas
 			li		a5, 33
-			blt		a1, a5, Indiceinf32						# If a1 > a5 jmp	(if 33 <= i)
+			blt		a1, a5, Indiceinf32							# If a1 > a5 jmp	(if 33 <= i)
 			addi	a1, a1, -32
 			addi	a0, a0, 4
 			lw		a3, -40(sp)									# index Datapointer in a3
@@ -183,21 +172,17 @@ Indiceinf32:
 
 
 			lw		a2, -4(sp)									# Loading inbyte in
-			slli	a2, a2, 3										# How many bits
-			# Sub padding
+			slli	a2, a2, 3									# How many bits
+
 			lw		a3, -24(sp)
-			sub		a2, a2, a3
+			sub		a2, a2, a3									# Sub padding
 
 			lw		a3, -40(sp)									# index Datapointer in a3
-			slli	a3, a3, 3										# Express it in bits too
+			slli	a3, a3, 3									# Express it in bits too
 
 			add		a4, a1, a3
 
-			# lw		a4, -32(sp)
-			# li		a3, 6
-			# beq		a4, a3, EndDecode
-
-			bge		a4, a2, EndDecode						# If a2 =< a4 (inbyte - padding =< Datapointer index + i) then decode is finished
+			bge		a4, a2, EndDecode							# If a2 =< a4 (inbyte - padding =< Datapointer index + i) then decode is finished
 
 			# Creating a moving windowed array
 
@@ -230,15 +215,13 @@ ToBigEndian1:
 			lw		a1, -52(sp)
 EndToBigEndian1:
 
-
-
 			sll		a3, a3, a1									# Tab1 << i
-#if a1 = 32, a3 = 0
 			li		a2, 32
+			#if a1 = 32, a3 = 0
 			bne		a1, a2, Notnull
 			li		a3, 0
 Notnull:
-			li		a2, 0												# Initialize moving windowed array
+			li		a2, 0										# Initialize moving windowed array
 			or		a2, a2, a3									# Tabtmp = Tab1
 
 
@@ -279,103 +262,77 @@ EndToBigEndian2:
 			# moving windowed array in a2
 
 
-
 			srl		a3, a2, 31									# Taking the last bit
-			beq		a3, zero, Val0							# Goto Val0 if the value start with 0
+			beq		a3, zero, Val0								# Goto Val0 if the value start with 0
 
 			srl		a3, a2, 30									# Taking the 2 last bit
 			li		a4, 0x00000001
 			and		a3, a3, a4									# Taking the bit before the last bit
-			beq		a3, zero, Val10							# Goto Val10 if the value start with 10
-			beq		zero, zero, Val11						# Goto Val11 if the value start with 11
+			beq		a3, zero, Val10								# Goto Val10 if the value start with 10
+			beq		zero, zero, Val11							# Goto Val11 if the value start with 11
 
 Val0:
-			li		a3, 3												# Nb of bytes to read = 3
-
-			li		a4, 0												# Value of the current char to read
+			li		a3, 3										# Nb of bytes to read = 3
+			li		a4, 0										# Value of the current char to read
 			li		a5, 32
 			sub		a5, a5, a3									# a5 = 32-Nb of bytes to read
 			srl		a4, a2, a5									# a4 = Tabtmp >> 32-i (Value of current)
-
-			beq		zero, zero, EndVal					# Goto EndVal
+			beq		zero, zero, EndVal							# Goto EndVal
 Val10:
-			li		a3, 4												# Nb of bytes to read = 4
-
-			li		a4, 0												# Value of the current char to read
+			li		a3, 4										# Nb of bytes to read = 4
+			li		a4, 0										# Value of the current char to read
 			li		a5, 32
 			sub		a5, a5, a3									# a5 = 32-Nb of bytes to read
 			srl		a4, a2, a5									# a4 = Tabtmp >> 32-i (Value of current)
-			andi	a4, a4, 7										# taking the 3 last bits
-			addi	a4, a4, 4										# adding 4, as 1000 is value nb 4, 1001 is 5.. and rankTable start from 0
-
-			beq		zero, zero, EndVal					# Goto EndVal
+			andi	a4, a4, 7									# taking the 3 last bits
+			addi	a4, a4, 4									# adding 4, as 1000 is value nb 4, 1001 is 5.. and rankTable start from 0
+			beq		zero, zero, EndVal							# Goto EndVal
 Val11:
-			li		a3, 5												# Nb of bytes to read = 5
-
-			li		a4, 0												# Value of the current char to read
+			li		a3, 5										# Nb of bytes to read = 5
+			li		a4, 0										# Value of the current char to read
 			li		a5, 32
 			sub		a5, a5, a3									# a5 = 32-Nb of bytes to read
 			srl		a4, a2, a5									# a4 = Tabtmp >> 32-i (Value of current)
-			andi	a4, a4, 7										# taking the 3 last bits
-			addi	a4, a4, 8										# adding 8, as 11000 is 8, 11001 is 9...
-
-			#beq		zero, zero, EndVal				# Goto EndVal
+			andi	a4, a4, 7									# taking the 3 last bits
+			addi	a4, a4, 8									# adding 8, as 11000 is 8, 11001 is 9...
+			#beq		zero, zero, EndVal						# Goto EndVal
 EndVal:
 			# Number of bits to read is now in a3
-
 			add		a1, a1, a3									# Data index += Nb of bytes read
-
 			li		a5, 8
 			bge		a4, a5, ValInRk2
-
 ValInRk1:
 			lw		a3, -16(sp)									# rankTable1 in A3
-
-			beq		zero, zero, EndValInRK			# Goto EndValInRK
+			beq		zero, zero, EndValInRK						# Goto EndValInRK
 ValInRk2:
 			lw		a3, -20(sp)									# rankTable2 in A3
 			sub		a4, a4, a5									# Value = value - 8 (As first 8 values are in rankTable1)
-
 			#beq		zero, zero, EndValInRK
 EndValInRK:
 			li		a5, 0xF0000000
-
-			# a4 = 3 = 011 => a4 doit etre de 100 (3eme)
 			slli	a4, a4, 2									# a3 = a3 * 4
-
 			srl		a5, a5, a4									# Puting the mask to the value we want
 			and		a5, a5, a3									# The value is now in a5 but at index a4
 			sll		a5, a5, a4									# The value is now in a5 (left side)
-			#srli	a5, a5, 28
+
 			# Saving data
-
 			lw		a3, -32(sp)									# Data Index
-
 			slli	a3, a3, 2
 			srl		a5, a5, a3
 			srli	a3, a3, 2
 			addi	a3, a3, 1
 			sw 		a3, -32(sp)									# Save Data index
 
-
-
 			lw		a4, -12(sp)									# outbytes
-			blt		a4, a3, Endminus1						# if dataindex > outbytes
+			blt		a4, a3, Endminus1							# if dataindex > outbytes
 
 			lw    a3, -36(sp)									# outp
 			or		a3, a3, a5
-			sw		a3, -36(sp)										# Save output
-
+			sw		a3, -36(sp)									# Save output
 			lw		a5, -32(sp)
-
 			li		a3, 8
 
-
-
-
-			bne		a3, a5, Continue						# If a5 >= 9 then we store data to the next register
-
-
+			bne		a3, a5, Continue							# If a5 >= 9 then we store data to the next register
 
 
 			# To Little endian
@@ -384,7 +341,7 @@ EndValInRK:
 
 			lw    a1, -36(sp)									# out tab
 			li		a3, 0
-			sw		a3, -36(sp)										# Reset the temp tab
+			sw		a3, -36(sp)									# Reset the temp tab
 
 			li		a3, 0xFF000000
 			and		a3, a3, a1
@@ -405,19 +362,16 @@ EndValInRK:
 			slli	a3, a3, 24
 			or		a3, a2, a3
 
-
 			lw		a1, -52(sp)
 			lw		a2, -56(sp)
 			# End To Little endian
 
-			lw    a5, -8(sp)							# outp
+			lw    	a5, -8(sp)									# outp
 			sw		a3, (a5)
 
-			addi	a5, a5, 4										# Next register
-			sw    a5, -8(sp)							# outp
+			addi	a5, a5, 4									# Next register
+			sw    	a5, -8(sp)									# outp
 
-			# addi 	a4, a4, 4
-			# sw    a4, -36(sp)									# save outp
 			lw		a5, -32(sp)
 			srli	a5, a5, 1
 
@@ -425,20 +379,18 @@ EndValInRK:
 			add		a3, a3, a5
 			sw		a3, -48(sp)
 
-
 			li		a5, 0
 			sw		a5, -32(sp)									# Index of the data stored is reset
+
 Continue:
-
 			beq		zero, zero, Decode
+
 EndDecode:
-
-
 			lw		a1, -32(sp)
-			beq		a1, zero, End					# If there is no new data then goto end
+			beq		a1, zero, End								# If there is no new data then goto end
 			# Last row of data is not stored yet
 			# To Little endian
-			lw    a1, -36(sp)									# out tab
+			lw    	a1, -36(sp)									# out tab
 
 			li		a3, 0xFF000000
 			and		a3, a3, a1
@@ -461,7 +413,7 @@ EndDecode:
 
 			# End To Little endian
 
-			lw    a5, -8(sp)							# outp
+			lw    	a5, -8(sp)									# outp
 			sw		a3, (a5)
 
 			lw		a5, -32(sp)
@@ -476,5 +428,5 @@ End:
 			ret
 
 Endminus1:
-			li	a0, -1
+			li		a0, -1
 			ret
