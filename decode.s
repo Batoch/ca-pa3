@@ -28,8 +28,6 @@
 	.globl	decode
 decode:
 			beq		zero, a1, End						# If inbyte = 0 jump to end
-			li		a4, 100
-			blt		a4, a1, Endminus1							# If input is more than 100 bytes then just skip
 			# Saving everything to be able to use a0-a5
 			sw    a0, -44(sp)
 			sw    a1, -4(sp)
@@ -489,7 +487,7 @@ EndDecode:
 			lw		a3, 8(a4)
 
 			lw		a0, -48(sp)
-			
+
 
 			# ebreak
 						# End To Little endian
