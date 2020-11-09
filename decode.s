@@ -429,20 +429,14 @@ EndValInRK:
 			li		a5, 0
 			sw		a5, -32(sp)									# Index of the data stored is reset
 Continue:
-# 			li		a3, 4
-# 			bne		a6, a3, Pasfin
-# 			lw		a4, -32(sp)
-# 			li		a3, 8
-# 			beq		a4, a3, EndDecode
-# Pasfin:
 
 			beq		zero, zero, Decode
 EndDecode:
 
 
-
-
-# Last row of data is not stored yet
+			lw		a1, -32(sp)
+			beq		a1, zero, End					# If there is no new data then goto end
+			# Last row of data is not stored yet
 			# To Little endian
 			lw    a1, -36(sp)									# out tab
 
@@ -477,27 +471,10 @@ EndDecode:
 			add		a3, a3, a5
 			sw		a3, -48(sp)
 
-
-
-			lw    a1, -36(sp)
-
-			lw    a4, -64(sp)									# outp
-			lw		a1, 0(a4)
-			lw		a2, 4(a4)
-			lw		a3, 8(a4)
-
+End:
 			lw		a0, -48(sp)
-
-
-			# ebreak
-						# End To Little endian
-
-
-			End:
-
 			ret
 
 Endminus1:
-
-		li	a0, -1
-ret
+			li	a0, -1
+			ret
